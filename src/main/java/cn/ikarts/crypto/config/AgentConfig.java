@@ -1,6 +1,7 @@
 package cn.ikarts.crypto.config;
 
 import cn.ikarts.crypto.hook.MonitoringHook;
+import cn.ikarts.crypto.tools.*;
 import cn.ikarts.crypto.utils.ModelHelper;
 import cn.ikarts.crypto.utils.PromptHelper;
 import io.agentscope.core.ReActAgent;
@@ -60,6 +61,11 @@ public class AgentConfig {
     public ReActAgent researcherAgent() {
 
         Toolkit toolkit = new Toolkit();
+        toolkit.registerTool(new XSearchTool());
+        toolkit.registerTool(new CoingeckoTool());
+        toolkit.registerTool(new DuneAnalyticsTool());
+        toolkit.registerTool(new DefiLlamaTool());
+        toolkit.registerTool(new RootDataTool());
 
         return ReActAgent.builder()
                 .name("ResearcherAgent")
