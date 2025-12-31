@@ -77,27 +77,65 @@ public class CryptoAgentManager {
 
             hub.enter().block();
 
-            Msg msg = coordinatorAgent.call(userMsg).block();
-            logger.info("【规划智能体】规划结果： {}", msg.getTextContent());
-            sink.tryEmitNext(msg.getTextContent());
-
-            String researchText = String.format("用户问题：{} \n 请根据如下任务规划完成研究任务：{}", userMsg, msg.getTextContent());
-            Msg researchMsg = Msg.builder().content(TextBlock.builder().text(researchText).build()).build();
-            sink.tryEmitNext(researchMsg.getTextContent());
-
-            Msg serachMsg = researcherAgent.call(researchMsg).block();
-            logger.info("【研究智能体】研究结果： {}", serachMsg.getTextContent());
-            sink.tryEmitNext(serachMsg.getTextContent());
-
-
-            Msg analyzeMsg = analyzerAgent.call(serachMsg).block();
-            logger.info("【分析智能体】分析结果： {}", analyzeMsg.getTextContent());
-            sink.tryEmitNext(analyzeMsg.getTextContent());
-
-            Msg synthesizeMsg = synthesizerAgent.call(analyzeMsg).block();
-            logger.info("【合成智能体】合成结果： {}", synthesizeMsg.getTextContent());
-            sink.tryEmitNext(synthesizeMsg.getTextContent());
+            // 异步处理智能体调用链，实现流式输出
+            processAgentChain(userMsg, sink)
+                    .doOnError(error -> {
+                        logger.error("智能体处理链出错: {}", error.getMessage(), error);
+                        sink.tryEmitError(error);
+                    })
+                    .doOnComplete(() -> {
+                        logger.info("智能体处理链完成");
+                        sink.tryEmitComplete();
+                    })
+                    .subscribe();
         }
+    }
+
+    /**
+     * 异步处理智能体调用链
+     */
+    private Flux<Void> processAgentChain(Msg userMsg, Sinks.Many<String> sink) {
+        return Flux.defer(() -> {
+            // 发送开始信号
+            sink.tryEmitNext("🤖 开始分析您的问题...\n");
+
+            return coordinatorAgent.call(userMsg)
+                    .doOnNext(msg -> {
+                        logger.info("【规划智能体】规划结果： {}", msg.getTextContent());
+                        sink.tryEmitNext("📋 **任务规划完成**\n" + msg.getTextContent() + "\n\n");
+                    })
+                    .flatMap(coordinatorMsg -> {
+                        String researchText = String.format("用户问题：%s \n 请根据如下任务规划完成研究任务：%s",
+                                userMsg.getTextContent(), coordinatorMsg.getTextContent());
+                        Msg researchMsg = Msg.builder()
+                                .content(TextBlock.builder().text(researchText).build())
+                                .build();
+
+                        sink.tryEmitNext("🔍 开始数据研究...\n");
+                        return researcherAgent.call(researchMsg);
+                    })
+                    .doOnNext(researchMsg -> {
+                        logger.info("【研究智能体】研究结果： {}", researchMsg.getTextContent());
+                        sink.tryEmitNext("📊 **数据研究完成**\n" + researchMsg.getTextContent() + "\n\n");
+                    })
+                    .flatMap(researchMsg -> {
+                        sink.tryEmitNext("🧠 开始深度分析...\n");
+                        return analyzerAgent.call(researchMsg);
+                    })
+                    .doOnNext(analyzeMsg -> {
+                        logger.info("【分析智能体】分析结果： {}", analyzeMsg.getTextContent());
+                        sink.tryEmitNext("📈 **深度分析完成**\n" + analyzeMsg.getTextContent() + "\n\n");
+                    })
+                    .flatMap(analyzeMsg -> {
+                        sink.tryEmitNext("✨ 开始生成最终报告...\n");
+                        return synthesizerAgent.call(analyzeMsg);
+                    })
+                    .doOnNext(synthesizeMsg -> {
+                        logger.info("【合成智能体】合成结果： {}", synthesizeMsg.getTextContent());
+                        sink.tryEmitNext("📋 **最终报告**\n" + synthesizeMsg.getTextContent() + "\n");
+                    })
+                    .then();
+        });
     }
 
 

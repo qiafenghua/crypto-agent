@@ -1,17 +1,20 @@
 package cn.ikarts.crypto.tools;
 
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.agentscope.core.tool.Tool;
 import io.agentscope.core.tool.ToolParam;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import tools.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
 
 /**
  * X（Twitter）搜索工具
@@ -40,7 +43,7 @@ public class XSearchTool {
      */
     @Tool(name = "desearch_keyword_search",
             description = """
-                    在 X (Twitter) 上进行高级搜索，返回高质量推文。
+                    在 X (Twitter) 上进行高级搜索，返回高质量推文的核心信息（作者、内容、互动数据）。
                     支持自然语言查询、关键词、运算符（如 OR, "exact phrase", from:user, since:2025-01-01 等）。
                     适用于采集社区情绪、项目官方公告、KOL 观点、热点事件讨论。
                     """)
@@ -82,15 +85,25 @@ public class XSearchTool {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                logger.error("DeSearch API 请求失败: {}", response);
+                logger.error("DeSearch API 请求失败，状态码: {}, 错误: {}", response.code(), response.message());
                 return "查询X推文失败，错误原因：" + response.message();
             }
-            logger.info("DeSearch API 响应: {}", response.body().string());
 
-            String body = response.body().string();
-            // 美化 JSON 输出
-            Object json = mapper.readValue(body, Object.class);
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+            var responseBody = response.body();
+            if (responseBody == null) {
+                logger.error("响应体为空");
+                return "查询X推文失败，响应体为空";
+            }
+
+            String bodyString = responseBody.string();
+            logger.info("DeSearch API 请求成功，查询: {}, 返回推文数: {}", query, finalCount);
+
+            JsonNode fullData = mapper.readTree(bodyString);
+
+            // 提取关键信息，减少上下文长度
+            return cn.ikarts.crypto.utils.KeyInfoExtractUtils.extractXKeyInfo(fullData);
         }
     }
+
+
 }

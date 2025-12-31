@@ -1,5 +1,8 @@
 # Compiled class file
 *.class
+target
+.idea
+node_modules
 
 # Log file
 *.log

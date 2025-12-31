@@ -7,8 +7,12 @@ import cn.ikarts.crypto.utils.PromptHelper;
 import io.agentscope.core.ReActAgent;
 import io.agentscope.core.memory.InMemoryMemory;
 import io.agentscope.core.tool.Toolkit;
+import io.agentscope.core.tool.mcp.McpClientBuilder;
+import io.agentscope.core.tool.mcp.McpClientWrapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
 
 /**
  * 智能体定义及配置
@@ -60,12 +64,20 @@ public class AgentConfig {
     @Bean("researcherAgent")
     public ReActAgent researcherAgent() {
 
+        //coingecko mcp工具
+        McpClientWrapper sseClient = McpClientBuilder.create("remote-mcp")
+                .sseTransport("https://mcp.api.coingecko.com/sse")
+                .timeout(Duration.ofSeconds(60))
+                .buildAsync()
+                .block();
+
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(new XSearchTool());
-        toolkit.registerTool(new CoingeckoTool());
-        toolkit.registerTool(new DuneAnalyticsTool());
-        toolkit.registerTool(new DefiLlamaTool());
+//        toolkit.registerTool(new CoingeckoTool());
+//        toolkit.registerTool(new DuneAnalyticsTool());
+//        toolkit.registerTool(new DefiLlamaTool());
         toolkit.registerTool(new RootDataTool());
+        toolkit.registerMcpClient(sseClient);
 
         return ReActAgent.builder()
                 .name("ResearcherAgent")
@@ -81,11 +93,23 @@ public class AgentConfig {
      */
     @Bean("synthesizerAgent")
     public ReActAgent synthesizerAgent() {
+
+        //图表生成工具
+        McpClientWrapper sseClient = McpClientBuilder.create("remote-mcp")
+                .sseTransport("https://mcp.api-inference.modelscope.net/6adbd84c10b141/sse")
+                .timeout(Duration.ofSeconds(60))
+                .buildAsync()
+                .block();
+
+        Toolkit toolkit = new Toolkit();
+        toolkit.registerMcpClient(sseClient);
+
         return ReActAgent.builder()
                 .name("SynthesizerAgent")
                 .sysPrompt(PromptHelper.buildSynthesizerSystemPrompt())
                 .model(ModelHelper.getLanguageModel())
                 .memory(new InMemoryMemory())
+                .toolkit(toolkit)
                 .build();
     }
 
