@@ -2,7 +2,6 @@ package cn.ikarts.crypto.agent;
 
 import cn.ikarts.crypto.utils.PromptHelper;
 import io.agentscope.core.ReActAgent;
-import io.agentscope.core.agent.Event;
 import io.agentscope.core.message.Msg;
 import io.agentscope.core.message.MsgRole;
 import io.agentscope.core.message.TextBlock;
@@ -27,7 +26,7 @@ public class CryptoAgentManager {
 
 //    private final DataSource dataSource;
 
-    private final ReActAgent analyzerAgent;
+//    private final ReActAgent analyzerAgent;
 
     private final ReActAgent coordinatorAgent;
 
@@ -36,9 +35,9 @@ public class CryptoAgentManager {
     private final ReActAgent synthesizerAgent;
 
 
-    public CryptoAgentManager(ReActAgent analyzerAgent, ReActAgent coordinatorAgent, ReActAgent researcherAgent, ReActAgent synthesizerAgent) {
+    public CryptoAgentManager(ReActAgent coordinatorAgent, ReActAgent researcherAgent, ReActAgent synthesizerAgent) {
 //        this.dataSource = dataSource;
-        this.analyzerAgent = analyzerAgent;
+//        this.analyzerAgent = analyzerAgent;
         this.coordinatorAgent = coordinatorAgent;
         this.researcherAgent = researcherAgent;
         this.synthesizerAgent = synthesizerAgent;
@@ -70,7 +69,7 @@ public class CryptoAgentManager {
 
         // 智能体通信通道
         try (MsgHub hub = MsgHub.builder()
-                .participants(coordinatorAgent, researcherAgent, analyzerAgent, synthesizerAgent)
+                .participants(coordinatorAgent, researcherAgent, synthesizerAgent)
                 .announcement(announcement)
                 .enableAutoBroadcast(true)
                 .build()) {
@@ -118,14 +117,14 @@ public class CryptoAgentManager {
                         logger.info("【研究智能体】研究结果： {}", researchMsg.getTextContent());
                         sink.tryEmitNext("📊 **数据研究完成**\n" + researchMsg.getTextContent() + "\n\n");
                     })
-                    .flatMap(researchMsg -> {
-                        sink.tryEmitNext("🧠 开始深度分析...\n");
-                        return analyzerAgent.call(researchMsg);
-                    })
-                    .doOnNext(analyzeMsg -> {
-                        logger.info("【分析智能体】分析结果： {}", analyzeMsg.getTextContent());
-                        sink.tryEmitNext("📈 **深度分析完成**\n" + analyzeMsg.getTextContent() + "\n\n");
-                    })
+//                    .flatMap(researchMsg -> {
+//                        sink.tryEmitNext("🧠 开始深度分析...\n");
+//                        return analyzerAgent.call(researchMsg);
+//                    })
+//                    .doOnNext(analyzeMsg -> {
+//                        logger.info("【分析智能体】分析结果： {}", analyzeMsg.getTextContent());
+//                        sink.tryEmitNext("📈 **深度分析完成**\n" + analyzeMsg.getTextContent() + "\n\n");
+//                    })
                     .flatMap(analyzeMsg -> {
                         sink.tryEmitNext("✨ 开始生成最终报告...\n");
                         return synthesizerAgent.call(analyzeMsg);
@@ -146,42 +145,6 @@ public class CryptoAgentManager {
         } else {
             logger.info("✓ New session created: {}\n", sessionId);
         }
-    }
-
-    public void processStream(Flux<Event> generator, Sinks.Many<String> sink) {
-        generator
-                .doOnNext(output -> logger.info("output = {}", output))
-                .filter(event -> !event.isLast())
-                .map(
-                        event -> {
-                            Msg msg = event.getMessage();
-                            return msg.getContent().stream()
-                                    .filter(block -> block instanceof TextBlock)
-                                    .map(block -> ((TextBlock) block).getText())
-                                    .toList();
-                        })
-                .flatMap(Flux::fromIterable)
-                .map(content -> content)
-                .doOnNext(sink::tryEmitNext)
-                .doOnError(
-                        e -> {
-                            logger.error(
-                                    "Unexpected error in stream processing: {}", e.getMessage(), e);
-                            sink.tryEmitNext("System processing error, please try again later.");
-                        })
-                .doOnComplete(
-                        () -> {
-                            logger.info("Stream processing completed successfully");
-                            sink.tryEmitComplete();
-                        })
-                .subscribe(
-                        // onNext - already handled in doOnNext
-                        null,
-                        // onError
-                        e -> {
-                            logger.error("Stream processing failed: {}", e.getMessage(), e);
-                            sink.tryEmitError(e);
-                        });
     }
 
     public void createSessionManager() {

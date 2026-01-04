@@ -1,7 +1,9 @@
 package cn.ikarts.crypto.tools;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
+import cn.ikarts.crypto.utils.KeyInfoExtractUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -52,11 +54,8 @@ public class XSearchTool {
                     "- \"Solana meme coins\"\n" +
                     "- \"$SOL OR solana from:verified min_faves:50 since:2025-12-01\"\n" +
                     "- \"What are the risks of investing in $PEPE?\"") String query,
-
             @ToolParam(name = "count", description = "返回推文数量，范围 1-50，推荐 10-20", required = false) Integer count,
-
             @ToolParam(name = "sort", description = "排序方式：Top（热门）或 Latest（最新），默认 Top", required = false) String sort,
-
             @ToolParam(name = "lang", description = "语言过滤，如 en（英文）、zh（中文），默认 en", required = false) String lang
     ) throws IOException {
 
@@ -66,7 +65,7 @@ public class XSearchTool {
         String finalLang = (lang == null) ? "en" : lang;
 
         // 编码查询
-        String encodedQuery = java.net.URLEncoder.encode(query, "UTF-8");
+        String encodedQuery = java.net.URLEncoder.encode(query, StandardCharsets.UTF_8);
 
         // 构建 URL
         String url = BASE_URL +
@@ -85,23 +84,19 @@ public class XSearchTool {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                logger.error("DeSearch API 请求失败，状态码: {}, 错误: {}", response.code(), response.message());
+                logger.error("查询X推文 API 请求失败，状态码: {}, 错误: {}", response.code(), response.message());
                 return "查询X推文失败，错误原因：" + response.message();
             }
 
             var responseBody = response.body();
-            if (responseBody == null) {
-                logger.error("响应体为空");
-                return "查询X推文失败，响应体为空";
-            }
 
             String bodyString = responseBody.string();
-            logger.info("DeSearch API 请求成功，查询: {}, 返回推文数: {}", query, finalCount);
+            logger.info("查询X推文 API 请求成功，查询: {}, 返回推文数: {}", query, finalCount);
 
             JsonNode fullData = mapper.readTree(bodyString);
 
             // 提取关键信息，减少上下文长度
-            return cn.ikarts.crypto.utils.KeyInfoExtractUtils.extractXKeyInfo(fullData);
+            return KeyInfoExtractUtils.extractXKeyInfo(fullData);
         }
     }
 
