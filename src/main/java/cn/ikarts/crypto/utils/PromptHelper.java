@@ -1,8 +1,10 @@
 package cn.ikarts.crypto.utils;
 
+import cn.hutool.core.date.DateUtil;
 import cn.ikarts.crypto.constants.PromptConstant;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -26,7 +28,9 @@ public class PromptHelper {
      * 自主数据收集系统提示
      */
     public static String buildResearcherSystemPrompt() {
-        return PromptConstant.RESEARCHER_SYSTEM_PROMPT;
+
+        return new SystemPromptTemplate(PromptConstant.RESEARCHER_SYSTEM_PROMPT)
+                .render(Map.of("datetime",DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss")));
     }
 
     /**
@@ -48,7 +52,7 @@ public class PromptHelper {
      */
     public static String buildAnnouncement(String query) {
         return new SystemPromptTemplate(PromptConstant.ANNOUNCEMENT_PROMPT)
-                .render(Map.of("query", query));
+                .render(Map.of("query", query, "datetime", DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss")));
     }
 
 }
