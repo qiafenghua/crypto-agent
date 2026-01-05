@@ -92,13 +92,20 @@ public class AgentConfig {
 //                .buildAsync()
 //                .block();
 
+        //网页搜索工具
+        McpClientWrapper tavily = McpClientBuilder.create("tavily-search")
+                .stdioTransport("npx", "-y", "tavily-mcp")
+                .header("TAVILY_API_KEY", "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")
+                .timeout(Duration.ofSeconds(60))
+                .buildAsync()
+                .block();
+
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(new XSearchTool());
         toolkit.registerTool(new CoingeckoTool());
-//        toolkit.registerTool(new DuneAnalyticsTool());
-//        toolkit.registerTool(new DefiLlamaTool());
         toolkit.registerTool(new RootDataTool());
 //        toolkit.registerMcpClient(sseClient);
+        toolkit.registerMcpClient(tavily);
 
         return ReActAgent.builder()
                 .name("ResearcherAgent")
@@ -116,7 +123,7 @@ public class AgentConfig {
     @Bean("synthesizerAgent")
     public ReActAgent synthesizerAgent() {
         //图表生成工具
-        McpClientWrapper sseClient = McpClientBuilder.create("remote-mcp")
+        McpClientWrapper sseClient = McpClientBuilder.create("mcp-server-chart")
                 .sseTransport("https://mcp.api-inference.modelscope.net/6adbd84c10b141/sse")
                 .timeout(Duration.ofSeconds(60))
                 .buildAsync()
