@@ -48,7 +48,7 @@ public class RootDataTool {
                 .url(BASE_URL + "/ser_inv")
                 .post(RequestBody.create(jsonBody, JSON))
                 .header("apikey", apiKey)
-                .header("language", "en")
+                .header("language", "zh")
                 .header("Content-Type", "application/json")
                 .build();
 
@@ -86,7 +86,7 @@ public class RootDataTool {
                 .url(BASE_URL + "/get_item")
                 .post(RequestBody.create(jsonBody, JSON))
                 .header("apikey", apiKey)
-                .header("language", "en")
+                .header("language", "zh")
                 .header("Content-Type", "application/json")
                 .build();
 

@@ -112,6 +112,7 @@ public class AgentConfig {
                 .sysPrompt(PromptHelper.buildResearcherSystemPrompt())
                 .model(ModelHelper.getLanguageModel())
                 .memory(new InMemoryMemory())
+                .hook(new MonitoringHook())
                 .hook(new StudioMessageHook(StudioManager.getClient()))
                 .toolkit(toolkit)
                 .build();
@@ -137,6 +138,7 @@ public class AgentConfig {
                 .sysPrompt(PromptHelper.buildSynthesizerSystemPrompt())
                 .model(ModelHelper.getLanguageModel())
                 .memory(new InMemoryMemory())
+                .hook(new MonitoringHook())
                 .hook(new StudioMessageHook(StudioManager.getClient()))
                 .toolkit(toolkit)
                 .build();

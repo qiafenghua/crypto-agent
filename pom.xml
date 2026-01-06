@@ -36,6 +36,13 @@
             <version>1.0.4</version>
         </dependency>
 
+        <!--AG-UI 集成-->
+        <dependency>
+            <groupId>io.agentscope</groupId>
+            <artifactId>agentscope-agui-spring-boot-starter</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+
         <dependency>
             <groupId>io.agentscope</groupId>
             <artifactId>agentscope</artifactId>
