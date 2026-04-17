@@ -196,38 +196,4 @@ curl -N "http://localhost:9090/agent/chat?message=请分析Solana近期表现&se
 
 `AgentConfig` 在 `@PostConstruct` 中会初始化 AgentScope Studio，默认连接 `http://localhost:3000`。如果该服务不可用，应用启动可能受影响。
 
-### 2. 会话持久化暂未真正启用
 
-虽然接口要求传入 `sessionId`，也提供了 `/agent/createSession`，但 `CryptoAgentManager` 中与 `SessionManager` 相关的持久化逻辑目前仍处于注释状态，因此当前更接近“请求级会话标识”，不是完整的持久上下文记忆。
-
-### 3. API Key 仍为源码硬编码
-
-这会带来安全和环境迁移问题，建议尽快改为配置中心、环境变量或 `application.yml` 注入。
-
-### 4. Maven 构建环境需要再校验
-
-本地尝试执行：
-
-```bash
-mvn -q -DskipTests compile
-```
-
-未完成验证，当前报错为 Maven 无法解析父 POM，且项目 `pom.xml` 同时声明了：
-
-- `java.version=17`
-- `maven-compiler-plugin source/target=8`
-
-建议统一 Java 编译版本后再进行完整构建验证。
-
-## 后续建议
-
-- 将所有密钥迁移为环境变量配置
-- 补全会话持久化能力
-- 增加统一异常处理与接口返回规范
-- 将 Agent 输出结构化，便于前端拆分展示
-- 增加启动脚本和 `.env.example`
-- 为 README 增加前端联调示例或页面截图
-
-## License
-
-当前仓库未声明 License，如需开源发布，请补充许可证文件。
