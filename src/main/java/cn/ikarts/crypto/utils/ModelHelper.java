@@ -11,7 +11,7 @@ import io.agentscope.core.model.DashScopeChatModel;
 public class ModelHelper {
 
 
-    private static final String DASHSCOPE_API_KEY = "sk-7c16b6de48a4444a85acf6e15c418618";
+    private static final String DASHSCOPE_API_KEY = "your-dashscope-api-key";
 
     public static DashScopeChatModel getLanguageModel(String modelName) {
         return DashScopeChatModel.builder()

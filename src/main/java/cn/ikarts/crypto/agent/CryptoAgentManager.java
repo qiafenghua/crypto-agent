@@ -115,7 +115,7 @@ public class CryptoAgentManager {
                     })
                     .doOnNext(researchMsg -> {
                         logger.info("【研究智能体】研究结果： {}", researchMsg.getTextContent());
-                        sink.tryEmitNext("📊 **数据研究完成**\n" + researchMsg.getTextContent() + "\n\n");
+                        sink.tryEmitNext(" **数据研究完成**\n" + researchMsg.getTextContent() + "\n\n");
                     })
 //                    .flatMap(researchMsg -> {
 //                        sink.tryEmitNext("🧠 开始深度分析...\n");
@@ -126,12 +126,12 @@ public class CryptoAgentManager {
 //                        sink.tryEmitNext("📈 **深度分析完成**\n" + analyzeMsg.getTextContent() + "\n\n");
 //                    })
                     .flatMap(analyzeMsg -> {
-                        sink.tryEmitNext("✨ 开始生成最终报告...\n");
+                        sink.tryEmitNext(" 开始生成最终报告...\n");
                         return synthesizerAgent.call(analyzeMsg);
                     })
                     .doOnNext(synthesizeMsg -> {
                         logger.info("【合成智能体】合成结果： {}", synthesizeMsg.getTextContent());
-                        sink.tryEmitNext("📋 **最终报告**\n" + synthesizeMsg.getTextContent() + "\n");
+                        sink.tryEmitNext(" **最终报告**\n" + synthesizeMsg.getTextContent() + "\n");
                     })
                     .then();
         });
